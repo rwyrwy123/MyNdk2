@@ -146,4 +146,8 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
         soloCount++;
         ffNdk.mutesoloJtC(soloCount % 3);
     }
+
+    public void testgit(){
+
+    }
 }
