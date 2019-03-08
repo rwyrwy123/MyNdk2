@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="start"
+        android:text="decode and play" />
+
+    <Button
+        android:id="@+id/pause"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="pause"
+        android:text="pause" />
+
+    <Button
+        android:id="@+id/continuedplay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="continuedplay"
+        android:text="continuedplay" />
+
+    <Button
+        android:id="@+id/stop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="stop"
+        android:text="stop" />
+
+    <Button
+        android:id="@+id/playpcm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="playpcm"
+        android:text="play pcm" />
+
+    <Button
+        android:id="@+id/mutesolo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="mutesolo"
+        android:text="mutesolo" />
+
+    <Button
+        android:id="@+id/next"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="next"
+        android:text="next" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:text="拖动"
+        android:layout_height="wrap_content" />
+
+    <SeekBar
+        android:id="@+id/seek_duration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/tv_duration"
+        android:layout_width="wrap_content"
+        android:text="00:00/00:00"
+        android:layout_height="wrap_content" />
+</LinearLayout>
