@@ -42,6 +42,8 @@ public:
     void release();
     void seek(int64_t perscent);
     void mutesolo(int solotype);
+    void pitchspeed(double pitch, double speed);
+    void volume(int volume);
 };
 
 

@@ -5,19 +5,27 @@
 #include "RWAudio.h"
 
 
-RWAudio::RWAudio(RWFFstate *fstate,int sample_rate, RwCallback *callback) {
+RWAudio::RWAudio(RWFFstate *fstate, int sample_rate, RwCallback *callback) {
     rwAudioQuene = new RWAudioQuene();
     this->fstate = fstate;
     this->sample_rate = sample_rate;
     this->callback = callback;
     outBuffer = static_cast<uint8_t *>(av_malloc(sample_rate * 2 * 2));
+
+    soundTouch = new SoundTouch();
+    sampleBuffer = static_cast<SAMPLETYPE *>(malloc(sample_rate * 2 * 2));
+    soundTouch->setSampleRate(sample_rate);
+    soundTouch->setChannels(2);
+    soundTouch->setPitch(pitch);
+    soundTouch->setTempo(speed);
+
 }
 
 RWAudio::~RWAudio() {
     release();
 }
 
-int RWAudio::convertTopcm() {
+int RWAudio::convertTopcm(void **soundData) {
     int datasize = 0;
     while (fstate != NULL && !fstate->exit) {
         if (rwAudioQuene->getAVPacketSize() > 0) {
@@ -76,14 +84,14 @@ int RWAudio::convertTopcm() {
                 swr_free(&swrContext);
                 continue;
             }
-            int nb = swr_convert(swrContext,
-                                 &outBuffer, avFrame->nb_samples,
-                                 (const uint8_t **) avFrame->data,
-                                 avFrame->nb_samples);
+            nb = swr_convert(swrContext,
+                             &outBuffer, avFrame->nb_samples,
+                             (const uint8_t **) avFrame->data,
+                             avFrame->nb_samples);
 
             int channels = av_get_channel_layout_nb_channels(avFrame->channel_layout);
             datasize = nb * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) * channels;
-
+            *soundData = outBuffer;
             currentDuration = avFrame->pts * av_q2d(time_base);
             if (currentDuration > duration) {
                 currentDuration = duration;
@@ -99,15 +107,52 @@ int RWAudio::convertTopcm() {
     return datasize;
 }
 
+int RWAudio::receiveSound() {
+
+    while (fstate != NULL && !fstate->exit) {
+        soundPcm = NULL;
+        if (finish) {
+            finish = false;
+            data_size = convertTopcm(reinterpret_cast<void **>(&soundPcm));
+            if (data_size > 0) {
+                for (int i = 0; i < data_size / 2 + 1; i++) {
+                    sampleBuffer[i] = (soundPcm[i * 2] | (soundPcm[i * 2 + 1] << 8));
+                }
+                soundTouch->putSamples(sampleBuffer, nb);
+                num = soundTouch->receiveSamples(sampleBuffer, data_size / 4);
+            } else {
+                soundTouch->flush();
+            }
+        }
+        if (num == 0) {
+            finish = true;
+            continue;
+        } else {
+            if (soundPcm == NULL) {
+                num = soundTouch->receiveSamples(sampleBuffer, data_size / 4);
+                if (num == 0) {
+                    finish = true;
+                    continue;
+                }
+            }
+            return num;
+        }
+    }
+    return 0;
+}
+
 void bqCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
     RWAudio *rwAudio = static_cast<RWAudio *>(context);
-    int size = rwAudio->convertTopcm();
+    int size = rwAudio->receiveSound();
+//    int size = rwAudio->convertTopcm(reinterpret_cast<void **>(&rwAudio->soundPcm));
     if (size > 0) {
         (*rwAudio->bqPlayerBufferQueue)->Enqueue(rwAudio->bqPlayerBufferQueue,
-                                                 rwAudio->outBuffer, size);
+                                                 rwAudio->sampleBuffer, size * 2 * 2);
+//        (*rwAudio->bqPlayerBufferQueue)->Enqueue(rwAudio->bqPlayerBufferQueue,
+//                                                 rwAudio->outBuffer, size);
 
         rwAudio->currentDuration += size / (rwAudio->sample_rate * 2 * 2);
-        if (rwAudio->currentDuration - rwAudio->currentLast > 0.1) {
+        if (rwAudio->currentDuration - rwAudio->currentLast >= 0.1) {
             rwAudio->currentLast = rwAudio->currentDuration;
             rwAudio->callback->duration(SUB_THREAD, rwAudio->duration, rwAudio->currentDuration);
         }
@@ -188,7 +233,8 @@ void RWAudio::initOpenSL() {
     // configure audio source
     SLDataLocator_AndroidSimpleBufferQueue loc_bufq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
                                                        2};
-    SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM, 2, getCurrentSampleRateForOpensles(sample_rate),
+    SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM, 2,
+                                   getCurrentSampleRateForOpensles(sample_rate),
                                    SL_PCMSAMPLEFORMAT_FIXED_16, SL_PCMSAMPLEFORMAT_FIXED_16,
                                    SL_SPEAKER_FRONT_LEFT | SL_SPEAKER_FRONT_RIGHT,
                                    SL_BYTEORDER_LITTLEENDIAN};
@@ -203,9 +249,10 @@ void RWAudio::initOpenSL() {
      *     fast audio does not support when SL_IID_EFFECTSEND is required, skip it
      *     for fast audio case
      */
-    const SLInterfaceID ids2[4] = {SL_IID_BUFFERQUEUE,SL_IID_MUTESOLO, SL_IID_VOLUME, SL_IID_EFFECTSEND,
+    const SLInterfaceID ids2[4] = {SL_IID_BUFFERQUEUE, SL_IID_MUTESOLO, SL_IID_VOLUME,
+                                   SL_IID_EFFECTSEND,
             /*SL_IID_MUTESOLO,*/};
-    const SLboolean req2[4] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
+    const SLboolean req2[4] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE,
             /*SL_BOOLEAN_TRUE,*/ };
 
     result = (*engineEngine)->CreateAudioPlayer(engineEngine, &bqPlayerObject, &audioSrc,
@@ -232,7 +279,8 @@ void RWAudio::initOpenSL() {
         (void) result;
     }
 
-    (*bqPlayerObject)->GetInterface(bqPlayerObject,SL_IID_MUTESOLO,&muteSoloItf);
+    (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_MUTESOLO, &muteSoloItf);
+    (*bqPlayerObject)->GetInterface(bqPlayerObject, SL_IID_VOLUME, &volumeItf);
 
 
     // register callback on the buffer queue
@@ -259,8 +307,7 @@ void RWAudio::stop() {
 
 int RWAudio::getCurrentSampleRateForOpensles(int sample_rate) {
     int rate = 0;
-    switch (sample_rate)
-    {
+    switch (sample_rate) {
         case 8000:
             rate = SL_SAMPLINGRATE_8;
             break;
@@ -301,7 +348,7 @@ int RWAudio::getCurrentSampleRateForOpensles(int sample_rate) {
             rate = SL_SAMPLINGRATE_192;
             break;
         default:
-            rate =  SL_SAMPLINGRATE_44_1;
+            rate = SL_SAMPLINGRATE_44_1;
     }
     return rate;
 }
@@ -323,6 +370,7 @@ void RWAudio::release() {
         bqPlayerPlay = NULL;
         bqPlayerBufferQueue = NULL;
         muteSoloItf = NULL;
+        volumeItf = NULL;
     }
 
     if (outputMixObject != NULL) {
@@ -362,21 +410,34 @@ void RWAudio::release() {
 }
 
 void RWAudio::mutesolo(int solotype) {
-    if (muteSoloItf != NULL){
-        if(solotype == 0)//right
+    if (muteSoloItf != NULL) {
+        if (solotype == 0)//right
         {
             (*muteSoloItf)->SetChannelMute(muteSoloItf, 1, false);
             (*muteSoloItf)->SetChannelMute(muteSoloItf, 0, true);
-        }
-        else if(solotype == 1)//left
+        } else if (solotype == 1)//left
         {
             (*muteSoloItf)->SetChannelMute(muteSoloItf, 1, true);
             (*muteSoloItf)->SetChannelMute(muteSoloItf, 0, false);
-        }
-        else if(solotype == 2)//center
+        } else if (solotype == 2)//center
         {
             (*muteSoloItf)->SetChannelMute(muteSoloItf, 1, false);
             (*muteSoloItf)->SetChannelMute(muteSoloItf, 0, false);
         }
     }
 }
+
+void RWAudio::pitchspeed(double pitch, double speed) {
+    this->pitch = pitch;
+    this->speed = speed;
+    if (soundTouch != NULL){
+        soundTouch->setTempo(speed);
+        soundTouch->setPitch(pitch);
+    }
+}
+
+void RWAudio::volume(int volume) {
+    (*volumeItf)->SetVolumeLevel(volumeItf,(100 - volume) * -100);
+}
+
+

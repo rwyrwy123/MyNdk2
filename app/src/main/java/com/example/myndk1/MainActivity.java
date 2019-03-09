@@ -31,8 +31,10 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
     private DurationBean durationBean;
     private DurationBean sendDurationBean;
     private SeekBar seek_duration;
+    private SeekBar seek_volume;
     private boolean seekProgress = false;
     private int soloCount = 0;
+    private int duration;
 
     @SuppressLint("HandlerLeak")
     private Handler handler = new Handler() {
@@ -43,8 +45,7 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
                 switch (msg.what) {
                     case 1:
                         durationBean = (DurationBean) msg.obj;
-                        seek_duration.setMax(durationBean.getDuration());
-//                        seek_duration.setProgress(durationBean.getCurrentDuration());
+                        seek_duration.setProgress(durationBean.getCurrentDuration() * 100 / durationBean.getDuration() );
                         tv_duration.setText(RWTimeUtil.secdsToDateFormat(durationBean.getDuration(), durationBean.getDuration())
                                 + "/" + RWTimeUtil.secdsToDateFormat(durationBean.getCurrentDuration(), durationBean.getDuration()));
                         break;
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
         setContentView(R.layout.activity_main);
         tv_duration = findViewById(R.id.tv_duration);
         seek_duration = findViewById(R.id.seek_duration);
+        seek_volume = findViewById(R.id.seek_volume);
         ffNdk = new FFNdk();
         ffNdk.setErrorListener(this);
         ffNdk.setPrepareListenter(this);
@@ -68,8 +70,27 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
         seek_duration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                Log.d("MainActivity seekBar ", "progress = "+progress);
-                ffNdk.seekJtC(progress);
+                if (ffNdk.getDuration() >0 && seekProgress){
+                    duration = ffNdk.getDuration() * progress / 100;
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                seekProgress = true;
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                ffNdk.seekJtC(duration);
+                seekProgress = false;
+            }
+        });
+
+        seek_volume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                ffNdk.volumeJtC(i);
             }
 
             @Override
@@ -147,7 +168,15 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
         ffNdk.mutesoloJtC(soloCount % 3);
     }
 
-    public void testgit(){
+    public void pitch(View view) {
+        ffNdk.pitchspeedJtC(1.5f,1.0f);
+    }
 
+    public void speed(View view) {
+        ffNdk.pitchspeedJtC(1.0f,1.5f);
+    }
+
+    public void pitchspeed(View view) {
+        ffNdk.pitchspeedJtC(1.5f,1.5f);
     }
 }

@@ -20,6 +20,11 @@ public class FFNdk {
     private IStopListener stopListener;
     private Boolean next = false;
     private String path;
+    private int duration = -1;
+
+    public int getDuration() {
+        return duration;
+    }
 
     public void setPrepareListenter(IPrepareListenter prepareListenter) {
         this.prepareListenter = prepareListenter;
@@ -42,6 +47,7 @@ public class FFNdk {
     }
 
     public void prepareCtJ(){
+        duration = -1;
         if (prepareListenter != null){
             prepareListenter.onPrepared();
         }
@@ -54,6 +60,9 @@ public class FFNdk {
     }
 
     public void durationCtJ(int duration,int currentDuration){
+        if (this.duration < 0){
+            this.duration = duration;
+        }
         if (durationListener != null){
             durationListener.onDuration(duration,currentDuration);
         }
@@ -93,6 +102,14 @@ public class FFNdk {
         stopJtC();
     }
 
+    public void pitchspeedJtC(double pitch,double speed){
+        pitchspeed(pitch,speed);
+    }
+
+    public void volumeJtC(int volume){
+        volume(volume);
+    }
+
     public void seekJtC(int perscent){
         seek(perscent);
     }
@@ -122,4 +139,6 @@ public class FFNdk {
     private native void next(String path);
     private native void seek(int perscent);
     private native void mutesolo(int solotype);
+    private native void pitchspeed(double pitch,double speed);
+    private native void volume(int volume);
 }

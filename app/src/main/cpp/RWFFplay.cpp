@@ -283,4 +283,16 @@ void RWFFplay::mutesolo(int solotype) {
     }
 }
 
+void RWFFplay::pitchspeed(double pitch, double speed) {
+    if (rwAudio != NULL){
+        rwAudio->pitchspeed(pitch,speed);
+    }
+}
+
+void RWFFplay::volume(int volume) {
+    if (rwAudio != NULL){
+        rwAudio->volume(volume);
+    }
+}
+
 

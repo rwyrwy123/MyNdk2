@@ -151,4 +151,21 @@ Java_com_example_myndk1_ff_FFNdk_mutesolo(JNIEnv *env, jobject instance, jint so
     if (pffplay != NULL){
         pffplay->mutesolo(solotype);
     }
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_myndk1_ff_FFNdk_pitchspeed(JNIEnv *env, jobject instance, jdouble pitch,
+                                            jdouble speed) {
+
+    // TODO
+    if (pffplay != NULL){
+        pffplay->pitchspeed(pitch,speed);
+    }
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_myndk1_ff_FFNdk_volume(JNIEnv *env, jobject instance, jint volume) {
+
+    // TODO
+    if (pffplay != NULL){
+        pffplay->volume(volume);
+    }
 }

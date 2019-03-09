@@ -16,6 +16,9 @@ extern "C" {
 #include "SLES/OpenSLES.h"
 #include "SLES/OpenSLES_Android.h"
 #include "RwCallback.h"
+#include "soundtouch/include/SoundTouch.h"
+
+using namespace soundtouch;
 
 class RWAudio {
 
@@ -47,6 +50,7 @@ public:
     SLPlayItf bqPlayerPlay;
     SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
     SLMuteSoloItf muteSoloItf;
+    SLVolumeItf volumeItf;
 
     AVRational time_base;
     double duration = 0;
@@ -54,12 +58,23 @@ public:
     double currentLast = 0 ;
     bool seek = false;
 
+    //soundTouch
+    SoundTouch *soundTouch = NULL;
+    SAMPLETYPE *sampleBuffer = NULL;
+    uint8_t *soundPcm = NULL;
+    int data_size;
+    int nb;
+    int num;
+    bool finish = true;
+    double pitch = 1.0f;
+    double speed = 1.0f;
+
 public:
     RWAudio(RWFFstate *fstate,int sample_rate,RwCallback *callback);
     ~RWAudio();
     void playaudio();
     void initOpenSL();
-    int convertTopcm();
+    int convertTopcm(void **soundData);
     void pause();
     void continuePlay();
     void stop();
@@ -67,6 +82,12 @@ public:
     int getCurrentSampleRateForOpensles(int sample_rate);
 
     void mutesolo(int solotype);
+
+    int receiveSound();
+
+    void pitchspeed(double pitch, double speed);
+
+    void volume(int volume);
 };
 
 
