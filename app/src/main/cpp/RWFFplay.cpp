@@ -50,7 +50,6 @@ void RWFFplay::prepareThread() {
     pthread_mutex_lock(&init_mutex);
     av_register_all();
     avformat_network_init();
-    int rest;
     avFormatContext = avformat_alloc_context();
     if (avFormatContext == NULL) {
         if (LOG_DEBUG) {
@@ -88,9 +87,15 @@ void RWFFplay::prepareThread() {
                 duration = rwAudio->duration;
                 rwAudio->time_base = avFormatContext->streams[i]->time_base;
             }
+        } else if(avFormatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
+            if (rwVideo == NULL) {
+                rwVideo = new RWVideo(callback,fstate);
+                rwVideo->streamIndex = i;
+                rwVideo->avCodecParameters = avFormatContext->streams[i]->codecpar;
+                rwVideo->time_base = avFormatContext->streams[i]->time_base;
+            }
         }
     }
-
     if (rwAudio == NULL) {
         if (LOG_DEBUG) {
             LOGE("audio can not find");
@@ -98,34 +103,8 @@ void RWFFplay::prepareThread() {
         return;
     }
 
-    AVCodec *dec = avcodec_find_decoder(rwAudio->avCodecParameters->codec_id);
-    if (dec == NULL) {
-        if (LOG_DEBUG) {
-            LOGE("decoder can not find");
-        }
-        return;
-    }
-    rwAudio->avCodecContext = avcodec_alloc_context3(dec);
-    if (rwAudio->avCodecContext == NULL) {
-        if (LOG_DEBUG) {
-            LOGE("avCodecContext can not create");
-        }
-        return;
-    }
-    rest = avcodec_parameters_to_context(rwAudio->avCodecContext, rwAudio->avCodecParameters);
-    if (rest < 0) {
-        if (LOG_DEBUG) {
-            LOGE("parameters can not to condecContext");
-        }
-        return;
-    }
-    rest = avcodec_open2(rwAudio->avCodecContext, rwAudio->avCodec, NULL);
-    if (rest != 0) {
-        if (LOG_DEBUG) {
-            LOGE("avcodec_open to fail");
-        }
-        return;
-    }
+    initAvpacket(rwVideo->avCodecParameters,&rwVideo->avCodecContext);
+    initAvpacket(rwAudio->avCodecParameters,&rwAudio->avCodecContext);
     if (callback != NULL) {
 //
         if (callback->javaVM == NULL){
@@ -144,9 +123,13 @@ void RWFFplay::startThreadRun() {
     if (rwAudio == NULL) {
         return;
     }
-
     // 获取数据
     rwAudio->playaudio();
+
+    if (rwVideo == NULL) {
+        return;
+    }
+    rwVideo->play();
     // 入队
     while (fstate != NULL && !fstate->exit) {
 
@@ -167,6 +150,8 @@ void RWFFplay::startThreadRun() {
         if (ret == 0) {
             if (avPacket->stream_index == rwAudio->streamIndex) {
                 rwAudio->rwAudioQuene->pushAVPacket(avPacket);
+            } else if(avPacket->stream_index == rwVideo->streamIndex){
+                rwVideo->videoQuene->pushAVPacket(avPacket);
             }
         } else {
             av_packet_free(&avPacket);
@@ -292,6 +277,38 @@ void RWFFplay::pitchspeed(double pitch, double speed) {
 void RWFFplay::volume(int volume) {
     if (rwAudio != NULL){
         rwAudio->volume(volume);
+    }
+}
+
+void RWFFplay::initAvpacket(AVCodecParameters *parameters, AVCodecContext **avCodecContext) {
+
+    AVCodec *dec = avcodec_find_decoder(parameters->codec_id);
+    if (dec == NULL) {
+        if (LOG_DEBUG) {
+            LOGE("decoder can not find");
+        }
+        return;
+    }
+    *avCodecContext = avcodec_alloc_context3(dec);
+    if (*avCodecContext == NULL) {
+        if (LOG_DEBUG) {
+            LOGE("avCodecContext can not create");
+        }
+        return;
+    }
+    rest = avcodec_parameters_to_context(*avCodecContext, parameters);
+    if (rest < 0) {
+        if (LOG_DEBUG) {
+            LOGE("parameters can not to condecContext");
+        }
+        return;
+    }
+    rest = avcodec_open2(*avCodecContext, dec, NULL);
+    if (rest != 0) {
+        if (LOG_DEBUG) {
+            LOGE("avcodec_open to fail");
+        }
+        return;
     }
 }
 

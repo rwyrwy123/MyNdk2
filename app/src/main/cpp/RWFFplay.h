@@ -14,6 +14,8 @@ extern "C"{
 #include "RWAudio.h"
 #include "pthread.h"
 #include "RWFFstate.h"
+#include "RWVideo.h"
+
 class RWFFplay {
 
 public:
@@ -21,8 +23,10 @@ public:
     AVFormatContext *avFormatContext ;
     RwCallback *callback ;
     RWAudio *rwAudio = NULL;
+    RWVideo *rwVideo = NULL;
     pthread_t preparedThread;
     pthread_t startThread;
+    int rest;
     RWFFstate *fstate = NULL;
     int exit = false; // 多次点击停止
     pthread_mutex_t init_mutex;
@@ -44,6 +48,7 @@ public:
     void mutesolo(int solotype);
     void pitchspeed(double pitch, double speed);
     void volume(int volume);
+    void initAvpacket(AVCodecParameters *parameters,AVCodecContext **avCodecContext);
 };
 
 

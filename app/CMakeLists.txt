@@ -10,6 +10,7 @@ add_library( # Sets the name of the library.
         src/main/cpp/RWFFplay.cpp
         src/main/cpp/RwCallback.cpp
         src/main/cpp/RWAudio.cpp
+        src/main/cpp/RWVideo.cpp
         src/main/cpp/RWFFstate.cpp
         src/main/cpp/RWOpenSL.cpp
         src/main/cpp/RWAudioQuene.cpp

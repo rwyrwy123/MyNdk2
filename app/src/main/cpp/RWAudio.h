@@ -58,6 +58,7 @@ public:
     double currentLast = 0 ;
     bool seek = false;
 
+
     //soundTouch
     SoundTouch *soundTouch = NULL;
     SAMPLETYPE *sampleBuffer = NULL;
