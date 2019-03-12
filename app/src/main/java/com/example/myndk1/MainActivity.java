@@ -27,8 +27,8 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
 //    private String path2 = "http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3";
     private String path2 = "http://ngcdn004.cnr.cn/live/dszs/index.m3u8";
 //    private String path = "/mnt/shared/Other/mydream.mp3";
-    private String path = "/mnt/shared/Other/movice.mp4";
-    private String pathPcm = "//mnt/shared/Other/mydream.pcm";
+    private String path = "/mnt/shared/Other/movie.mp4";
+    private String pathPcm = "/mnt/shared/Other/mydream.pcm";
     private TextView tv_duration;
     private RWGLSurfaceView surfaceView;
     private DurationBean durationBean;
@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
         seek_volume = findViewById(R.id.seek_volume);
         surfaceView = findViewById(R.id.surfaceview);
         ffNdk = new FFNdk();
+        ffNdk.setSurfaceView(surfaceView);
         ffNdk.setErrorListener(this);
         ffNdk.setPrepareListenter(this);
         ffNdk.setDurationListener(this);

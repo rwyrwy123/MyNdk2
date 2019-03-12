@@ -137,9 +137,9 @@ void RWFFplay::startThreadRun() {
             av_usleep(1000 * 100);
             continue;
         }
-        if (rwAudio->rwAudioQuene->getAVPacketSize() > 40){
-            continue;
-        }
+//        if (rwAudio->rwAudioQuene->getAVPacketSize() > 40){
+//            continue;
+//        }
 
         AVPacket *avPacket = av_packet_alloc();
         if (avPacket == NULL) {

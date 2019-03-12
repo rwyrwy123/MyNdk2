@@ -147,15 +147,15 @@ void RwCallback::yuv(int width, int height, uint8_t *y, uint8_t *u, uint8_t *v) 
         return;
     }
 
-    jbyteArray yarray = jniEnv->NewByteArray(width*height);
-    jniEnv->SetByteArrayRegion(yarray, 0,width * height, reinterpret_cast<jbyte *>(y));
-    jbyteArray uarray = jniEnv->NewByteArray(width*height/4);
-    jniEnv->SetByteArrayRegion(uarray, 0,width * height/4, reinterpret_cast<jbyte *>(u));
-    jbyteArray varray = jniEnv->NewByteArray(width*height);
-    jniEnv->SetByteArrayRegion(varray, 0,width * height/4, reinterpret_cast<jbyte *>(v));
-    jniEnv->CallVoidMethod(obj, jmid_yuv, width, height, y, u, v);
-    jniEnv->DeleteLocalRef(yarray);
-    jniEnv->DeleteLocalRef(uarray);
-    jniEnv->DeleteLocalRef(varray);
+    jbyteArray yarray = jenv->NewByteArray(width*height);
+    jenv->SetByteArrayRegion(yarray, 0,width * height, reinterpret_cast<jbyte *>(y));
+    jbyteArray uarray = jenv->NewByteArray(width*height/4);
+    jenv->SetByteArrayRegion(uarray, 0,width * height/4, reinterpret_cast<jbyte *>(u));
+    jbyteArray varray = jenv->NewByteArray(width*height);
+    jenv->SetByteArrayRegion(varray, 0,width * height/4, reinterpret_cast<jbyte *>(v));
+    jenv->CallVoidMethod(obj, jmid_yuv, width, height, yarray, uarray, varray);
+    jenv->DeleteLocalRef(yarray);
+    jenv->DeleteLocalRef(uarray);
+    jenv->DeleteLocalRef(varray);
     javaVM->DetachCurrentThread();
 }

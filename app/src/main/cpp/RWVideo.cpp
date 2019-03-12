@@ -43,13 +43,16 @@ void *playThread(void *data) {
         }
 
         if (avFrame->format = AV_PIX_FMT_YUV420P) {
+            LOGE("当前视频是YUV420P格式");
             video->callback->yuv(video->avCodecContext->width, video->avCodecContext->height,
                                  avFrame->data[0],
                                  avFrame->data[1],
                                  avFrame->data[2]);
         } else {
+            LOGE("当前视频不是YUV420P格式");
             AVFrame *avFrame420 = av_frame_alloc();
-            int num = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, video->avCodecContext->width,
+            int num = av_image_get_buffer_size(AV_PIX_FMT_YUV420P,
+                    video->avCodecContext->width,
                                                video->avCodecContext->height, 1);
             uint8_t *buffer = static_cast<uint8_t *>(av_malloc(num * sizeof(uint8_t)));
             av_image_fill_arrays(avFrame420->data, avFrame420->linesize,
@@ -64,37 +67,45 @@ void *playThread(void *data) {
                                                     video->avCodecContext->width,
                                                     video->avCodecContext->height,
                                                     AV_PIX_FMT_YUV420P,SWS_BICUBIC,NULL,NULL,NULL);
-            if (swsContext == NULL) {
+//            if (swsContext == NULL) {
+//                av_frame_free(&avFrame420);
+//                av_free(avFrame420);
+//                av_free(buffer);
+//                av_frame_free(&avFrame);
+//                av_free(avFrame);
+//                avFrame = NULL;
+//                av_packet_free(&avPacket);
+//                av_free(avPacket);
+//                avPacket = NULL;
+//                continue;
+//            }
+            if(!swsContext)
+            {
                 av_frame_free(&avFrame420);
                 av_free(avFrame420);
                 av_free(buffer);
-                av_frame_free(&avFrame);
-                av_free(avFrame);
-                avFrame = NULL;
-                av_packet_free(&avPacket);
-                av_free(avPacket);
-                avPacket = NULL;
                 continue;
             }
             sws_scale(swsContext,avFrame->data,avFrame->linesize,0,
-                    avFrame->height,avFrame420->data,avFrame->linesize);
-            video->callback->yuv(video->avCodecContext->width, video->avCodecContext->height,
+                    avFrame->height,avFrame420->data,avFrame420->linesize);
+            video->callback->yuv(video->avCodecContext->width,
+                    video->avCodecContext->height,
                                  avFrame420->data[0],
                                  avFrame420->data[1],
                                  avFrame420->data[2]);
             av_frame_free(&avFrame420);
             av_free(avFrame420);
             av_free(buffer);
-            av_frame_free(&avFrame);
-            av_free(avFrame);
-            avFrame = NULL;
-            av_packet_free(&avPacket);
-            av_free(avPacket);
-            avPacket = NULL;
+            sws_freeContext(swsContext);
         }
-
+        av_frame_free(&avFrame);
+        av_free(avFrame);
+        avFrame = NULL;
+        av_packet_free(&avPacket);
+        av_free(avPacket);
+        avPacket = NULL;
     }
-    pthread_detach(video->playthread);
+    pthread_exit(&video->playthread);
 }
 
 void RWVideo::play() {
