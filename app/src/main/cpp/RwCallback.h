@@ -21,6 +21,7 @@ public:
     jmethodID jmid_duration;
     jmethodID jmid_pause;
     jmethodID jmid_stop;
+    jmethodID jmid_yuv;
 public:
     RwCallback(JavaVM *vm,JNIEnv *env,jobject obj);
     ~RwCallback();
@@ -29,6 +30,7 @@ public:
     void duration(int type,int duration,int currentDuration);
     void stop(int type);
     void pause(int type);
+    void yuv(int width,int height,uint8_t *y,uint8_t *u,uint8_t *v);
 };
 
 

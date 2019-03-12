@@ -18,6 +18,7 @@ import com.example.myndk1.ff.IErrorListener;
 import com.example.myndk1.ff.IPauseListener;
 import com.example.myndk1.ff.IPrepareListenter;
 import com.example.myndk1.ff.IStopListener;
+import com.example.myndk1.gl.RWGLSurfaceView;
 import com.example.myndk1.utils.RWTimeUtil;
 
 public class MainActivity extends AppCompatActivity implements IPrepareListenter, IErrorListener, IDurationListener, IPauseListener, IStopListener {
@@ -26,9 +27,10 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
 //    private String path2 = "http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3";
     private String path2 = "http://ngcdn004.cnr.cn/live/dszs/index.m3u8";
 //    private String path = "/mnt/shared/Other/mydream.mp3";
-    private String path = "/mnt/shared/Other/movie.mp4";
+    private String path = "/mnt/shared/Other/movice.mp4";
     private String pathPcm = "//mnt/shared/Other/mydream.pcm";
     private TextView tv_duration;
+    private RWGLSurfaceView surfaceView;
     private DurationBean durationBean;
     private DurationBean sendDurationBean;
     private SeekBar seek_duration;
@@ -62,6 +64,7 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
         tv_duration = findViewById(R.id.tv_duration);
         seek_duration = findViewById(R.id.seek_duration);
         seek_volume = findViewById(R.id.seek_volume);
+        surfaceView = findViewById(R.id.surfaceview);
         ffNdk = new FFNdk();
         ffNdk.setErrorListener(this);
         ffNdk.setPrepareListenter(this);

@@ -125,5 +125,11 @@
             android:id="@+id/seek_volume"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
+
+        <com.example.myndk1.gl.RWGLSurfaceView
+            android:id="@+id/surfaceview"
+            android:layout_width="match_parent"
+            android:layout_height="250dp" />
     </LinearLayout>
 </ScrollView>

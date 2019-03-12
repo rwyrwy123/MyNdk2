@@ -1,5 +1,7 @@
 package com.example.myndk1.ff;
 
+import com.example.myndk1.gl.RWGLSurfaceView;
+
 public class FFNdk {
     static {
         System.loadLibrary("avdevice-57");
@@ -21,6 +23,7 @@ public class FFNdk {
     private Boolean next = false;
     private String path;
     private int duration = -1;
+    private RWGLSurfaceView surfaceView;
 
     public int getDuration() {
         return duration;
@@ -44,6 +47,10 @@ public class FFNdk {
 
     public void setStopListener(IStopListener stopListener) {
         this.stopListener = stopListener;
+    }
+
+    public void setSurfaceView(RWGLSurfaceView surfaceView) {
+        this.surfaceView = surfaceView;
     }
 
     public void prepareCtJ(){
@@ -81,6 +88,13 @@ public class FFNdk {
         if (next){
             next = false;
             prepareJtC(path);
+        }
+    }
+
+    public void yuvCtJ(int width,int height,byte[] y,byte[]u,byte[]v){
+        if(surfaceView != null)
+        {
+            surfaceView.setYUVData(width, height, y, u, v);
         }
     }
 

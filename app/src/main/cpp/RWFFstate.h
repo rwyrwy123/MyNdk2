@@ -10,6 +10,7 @@ class RWFFstate {
 
 public:
     bool exit = false;
+    bool seek = false;
 public:
     RWFFstate();
     ~RWFFstate();

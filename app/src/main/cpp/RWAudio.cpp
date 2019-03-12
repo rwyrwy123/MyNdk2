@@ -1,7 +1,6 @@
 //
 // Created by asus on 2019-03-04.
 //
-
 #include "RWAudio.h"
 
 
@@ -110,6 +109,12 @@ int RWAudio::convertTopcm(void **soundData) {
 int RWAudio::receiveSound() {
 
     while (fstate != NULL && !fstate->exit) {
+
+        if(seek)
+        {
+            av_usleep(1000*100);
+            continue;
+        }
         soundPcm = NULL;
         if (finish) {
             finish = false;

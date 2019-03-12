@@ -22,6 +22,7 @@ RwCallback::RwCallback(JavaVM *vm, JNIEnv *env, jobject jobject1) {
     this->jmid_duration = env->GetMethodID(jcz, "durationCtJ", "(II)V");
     this->jmid_pause = env->GetMethodID(jcz, "pauseCtJ", "()V");
     this->jmid_stop = env->GetMethodID(jcz, "stopCtJ", "()V");
+    this->jmid_yuv = env->GetMethodID(jcz, "yuvCtJ", "(II[B[B[B)V");
 }
 
 
@@ -132,4 +133,29 @@ void RwCallback::pause(int type) {
         jenv->CallVoidMethod(obj,jmid_pause);
         javaVM->DetachCurrentThread();
     }
+}
+
+void RwCallback::yuv(int width, int height, uint8_t *y, uint8_t *u, uint8_t *v) {
+
+    JNIEnv *jenv;
+    if(javaVM->AttachCurrentThread(&jenv, NULL) != JNI_OK)
+    {
+        if(LOG_DEBUG)
+        {
+            LOGE("get child thread jnienv worng");
+        }
+        return;
+    }
+
+    jbyteArray yarray = jniEnv->NewByteArray(width*height);
+    jniEnv->SetByteArrayRegion(yarray, 0,width * height, reinterpret_cast<jbyte *>(y));
+    jbyteArray uarray = jniEnv->NewByteArray(width*height/4);
+    jniEnv->SetByteArrayRegion(uarray, 0,width * height/4, reinterpret_cast<jbyte *>(u));
+    jbyteArray varray = jniEnv->NewByteArray(width*height);
+    jniEnv->SetByteArrayRegion(varray, 0,width * height/4, reinterpret_cast<jbyte *>(v));
+    jniEnv->CallVoidMethod(obj, jmid_yuv, width, height, y, u, v);
+    jniEnv->DeleteLocalRef(yarray);
+    jniEnv->DeleteLocalRef(uarray);
+    jniEnv->DeleteLocalRef(varray);
+    javaVM->DetachCurrentThread();
 }

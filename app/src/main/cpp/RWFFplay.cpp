@@ -108,9 +108,9 @@ void RWFFplay::prepareThread() {
     if (callback != NULL) {
 //
         if (callback->javaVM == NULL){
-            LOGE("javaVM is empty");
+//            LOGE("javaVM is empty");
         } else{
-            LOGE("javaVM is not empty");
+//            LOGE("javaVM is not empty");
         }
 
         callback->prepare(SUB_THREAD);
@@ -123,17 +123,18 @@ void RWFFplay::startThreadRun() {
     if (rwAudio == NULL) {
         return;
     }
-    // 获取数据
-    rwAudio->playaudio();
-
     if (rwVideo == NULL) {
         return;
     }
+
+    // 获取数据
+    rwAudio->playaudio();
     rwVideo->play();
     // 入队
     while (fstate != NULL && !fstate->exit) {
 
         if (rwAudio->seek){
+            av_usleep(1000 * 100);
             continue;
         }
         if (rwAudio->rwAudioQuene->getAVPacketSize() > 40){
@@ -246,6 +247,7 @@ void RWFFplay::seek(int64_t perscent) {
     if (duration <= 0){
         return;
     }
+
     if (perscent > 0 &&perscent <= duration){
         if (rwAudio != NULL){
             rwAudio->seek = true;
