@@ -93,6 +93,13 @@ void RWFFplay::prepareThread() {
                 rwVideo->streamIndex = i;
                 rwVideo->avCodecParameters = avFormatContext->streams[i]->codecpar;
                 rwVideo->time_base = avFormatContext->streams[i]->time_base;
+
+                int num = avFormatContext->streams[i]->r_frame_rate.num;
+                int den = avFormatContext->streams[i]->r_frame_rate.den;
+                if (num != 0 && den != 0){
+                    int fps =  num / den;
+                    rwVideo -> defaultDelayTime = 1.0 / fps;
+                }
             }
         }
     }
@@ -127,13 +134,14 @@ void RWFFplay::startThreadRun() {
         return;
     }
 
+    rwVideo->audio = rwAudio;
     // 获取数据
     rwAudio->playaudio();
     rwVideo->play();
     // 入队
     while (fstate != NULL && !fstate->exit) {
 
-        if (rwAudio->seek){
+        if (fstate->seek){
             av_usleep(1000 * 100);
             continue;
         }
@@ -143,7 +151,7 @@ void RWFFplay::startThreadRun() {
 
         AVPacket *avPacket = av_packet_alloc();
         if (avPacket == NULL) {
-            break;
+            continue;
         }
         pthread_mutex_lock(&seek_mutex);
         int ret = av_read_frame(avFormatContext, avPacket);
@@ -157,11 +165,14 @@ void RWFFplay::startThreadRun() {
         } else {
             av_packet_free(&avPacket);
             free(avPacket);
-            if (rwAudio ->rwAudioQuene->getAVPacketSize() >0){
-                continue;
-            } else{
-                fstate->exit = true;
-                break;
+            while(fstate != NULL && !fstate->exit)
+            {
+                if (rwAudio ->rwAudioQuene->getAVPacketSize() >0){
+                    continue;
+                } else{
+                    fstate->exit = true;
+                    break;
+                }
             }
         }
     }
@@ -244,22 +255,32 @@ void RWFFplay::release() {
 
 void RWFFplay::seek(int64_t perscent) {
 
+    LOGE("seek time %ld", perscent);
     if (duration <= 0){
         return;
     }
-
-    if (perscent > 0 &&perscent <= duration){
+    if (perscent > 0 && perscent <= duration){
+        fstate->seek = true;
+        pthread_mutex_lock(&seek_mutex);
+        int64_t time =  perscent * AV_TIME_BASE;
+        avformat_seek_file(avFormatContext,-1,INT64_MIN,time,INT64_MAX,0);
         if (rwAudio != NULL){
-            rwAudio->seek = true;
             rwAudio->rwAudioQuene->releaseAVPacket();
             rwAudio->currentDuration = 0;
             rwAudio->currentLast = 0;
-            pthread_mutex_lock(&seek_mutex);
-            int64_t time =  perscent * AV_TIME_BASE;
-            avformat_seek_file(avFormatContext,-1,INT64_MIN,time,INT64_MAX,0);
-            pthread_mutex_unlock(&seek_mutex);
-            rwAudio->seek = false;
+            pthread_mutex_lock(&rwAudio->seekMutex);
+            avcodec_flush_buffers(rwAudio->avCodecContext);
+            pthread_mutex_unlock(&rwAudio->seekMutex);
         }
+        if (rwVideo != NULL){
+            rwVideo->videoQuene->releaseAVPacket();
+            rwVideo->clock = 0;
+            pthread_mutex_lock(&rwVideo->seekMutex);
+            avcodec_flush_buffers(rwVideo->avCodecContext);
+            pthread_mutex_unlock(&rwVideo->seekMutex);
+        }
+        pthread_mutex_unlock(&seek_mutex);
+        fstate->seek = false;
     }
 
 }

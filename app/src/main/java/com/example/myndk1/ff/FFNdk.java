@@ -1,5 +1,7 @@
 package com.example.myndk1.ff;
 
+import android.util.Log;
+
 import com.example.myndk1.gl.RWGLSurfaceView;
 
 public class FFNdk {
@@ -95,6 +97,8 @@ public class FFNdk {
         if(surfaceView != null)
         {
             surfaceView.setYUVData(width, height, y, u, v);
+
+            Log.d("MainActivity文件","width="+width+"height="+height+"y="+y.toString()+"u="+u.toString()+"v="+v.toString());
         }
     }
 
@@ -125,6 +129,7 @@ public class FFNdk {
     }
 
     public void seekJtC(int perscent){
+        Log.d("perscent", "perscent" + perscent);
         seek(perscent);
     }
 

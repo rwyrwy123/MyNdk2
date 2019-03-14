@@ -8,6 +8,7 @@
 #include "RwCallback.h"
 #include "RWFFstate.h"
 #include "RWAudioQuene.h"
+#include "RWAudio.h"
 
 extern "C" {
 
@@ -27,10 +28,18 @@ public:
     RwCallback *callback = NULL;
     RWFFstate *fstate = NULL;
     pthread_t playthread;
+    RWAudio *audio = NULL;
+    int clock = 0;
+    double defaultDelayTime = 0.04;
+    double delayTime = 0;
+    pthread_mutex_t seekMutex;
+
 public:
     RWVideo(RwCallback *callback,RWFFstate *fstate);
     ~RWVideo();
     void play();
+    double getCurrentTime(AVFrame *avFrame);
+    double getDelayTime(double diff);
 };
 
 

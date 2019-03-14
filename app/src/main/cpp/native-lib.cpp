@@ -141,6 +141,7 @@ Java_com_example_myndk1_ff_FFNdk_seek(JNIEnv *env, jobject instance, jint persce
 
     // TODO
     if (pffplay != NULL){
+        LOGE("perscent %d" ,perscent);
         pffplay->seek(perscent);
     }
 }extern "C"

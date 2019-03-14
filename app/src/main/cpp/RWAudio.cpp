@@ -17,11 +17,12 @@ RWAudio::RWAudio(RWFFstate *fstate, int sample_rate, RwCallback *callback) {
     soundTouch->setChannels(2);
     soundTouch->setPitch(pitch);
     soundTouch->setTempo(speed);
-
+    pthread_mutex_init(&seekMutex,NULL);
 }
 
 RWAudio::~RWAudio() {
     release();
+    pthread_mutex_destroy(&seekMutex);
 }
 
 int RWAudio::convertTopcm(void **soundData) {
@@ -36,9 +37,11 @@ int RWAudio::convertTopcm(void **soundData) {
                 continue;
             }
             rwAudioQuene->popAVPacket(avPacket);
+            pthread_mutex_lock(&seekMutex);
             if (avcodec_send_packet(avCodecContext, avPacket) != 0) {
                 av_packet_free(&avPacket);
                 free(avPacket);
+                pthread_mutex_unlock(&seekMutex);
                 continue;
             };
 
@@ -47,6 +50,7 @@ int RWAudio::convertTopcm(void **soundData) {
                 if (LOG_DEBUG) {
                     LOGI("convertTopcm avFrame create fail")
                 }
+                pthread_mutex_unlock(&seekMutex);
                 continue;
             }
             if (avcodec_receive_frame(avCodecContext, avFrame) != 0) {
@@ -54,6 +58,7 @@ int RWAudio::convertTopcm(void **soundData) {
                 free(avFrame);
                 av_packet_free(&avPacket);
                 free(avPacket);
+                pthread_mutex_unlock(&seekMutex);
                 continue;
             };
 
@@ -81,6 +86,7 @@ int RWAudio::convertTopcm(void **soundData) {
                 av_packet_free(&avPacket);
                 free(avPacket);
                 swr_free(&swrContext);
+                pthread_mutex_unlock(&seekMutex);
                 continue;
             }
             nb = swr_convert(swrContext,
@@ -100,6 +106,7 @@ int RWAudio::convertTopcm(void **soundData) {
             av_packet_free(&avPacket);
             free(avPacket);
             swr_free(&swrContext);
+            pthread_mutex_unlock(&seekMutex);
             break;
         }
     }
@@ -110,11 +117,12 @@ int RWAudio::receiveSound() {
 
     while (fstate != NULL && !fstate->exit) {
 
-        if(seek)
+        if(fstate->seek)
         {
             av_usleep(1000*100);
             continue;
         }
+
         soundPcm = NULL;
         if (finish) {
             finish = false;

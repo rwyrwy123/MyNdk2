@@ -57,7 +57,7 @@ public:
     double duration = 0;
     double currentDuration = 0 ;
     double currentLast = 0 ;
-    bool seek = false;
+//    bool seek = false;
 
 
     //soundTouch
@@ -70,6 +70,7 @@ public:
     bool finish = true;
     double pitch = 1.0f;
     double speed = 1.0f;
+    pthread_mutex_t seekMutex;
 
 public:
     RWAudio(RWFFstate *fstate,int sample_rate,RwCallback *callback);
