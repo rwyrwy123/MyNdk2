@@ -24,13 +24,11 @@ import com.example.myndk1.utils.RWTimeUtil;
 public class MainActivity extends AppCompatActivity implements IPrepareListenter, IErrorListener, IDurationListener, IPauseListener, IStopListener {
 
     private FFNdk ffNdk;
-    //    private String path2 = "http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3";
+//    private String path2 = "http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3";
     private String path2 = "http://ngcdn004.cnr.cn/live/dszs/index.m3u8";
-    //    private String path = "/mnt/shared/Other/mydream.mp3";
-//    private String path = "/mnt/shared/Other/movice1.mp4";  // 花屏
-//    private String path;
-        private String path = "/mnt/shared/Other/movice.mp4";  //正常
-    private String pathPcm = "/mnt/shared/Other/mydream.pcm";
+//    private String path = "/mnt/shared/Other/mydream.mp3";
+    private String path = "/mnt/shared/Other/movice.mp4";
+    private String pathPcm = "//mnt/shared/Other/mydream.pcm";
     private TextView tv_duration;
     private RWGLSurfaceView surfaceView;
     private DurationBean durationBean;
@@ -50,13 +48,9 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
                 switch (msg.what) {
                     case 1:
                         durationBean = (DurationBean) msg.obj;
+                        seek_duration.setProgress(durationBean.getCurrentDuration() * 100 / durationBean.getDuration() );
                         tv_duration.setText(RWTimeUtil.secdsToDateFormat(durationBean.getDuration(), durationBean.getDuration())
                                 + "/" + RWTimeUtil.secdsToDateFormat(durationBean.getCurrentDuration(), durationBean.getDuration()));
-
-                        if(!seekProgress && durationBean.getDuration() > 0)
-                        {
-                            seek_duration.setProgress(durationBean.getCurrentDuration() * 100 / durationBean.getDuration());
-                        }
                         break;
                 }
             }
@@ -72,18 +66,15 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
         seek_volume = findViewById(R.id.seek_volume);
         surfaceView = findViewById(R.id.surfaceview);
         ffNdk = new FFNdk();
-        ffNdk.setSurfaceView(surfaceView);
         ffNdk.setErrorListener(this);
         ffNdk.setPrepareListenter(this);
         ffNdk.setDurationListener(this);
         ffNdk.setPauseListener(this);
         ffNdk.setStopListener(this);
-
-//        path = getFilesDir() + "/movice.mp4";
         seek_duration.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (ffNdk.getDuration() > 0 && seekProgress) {
+                if (ffNdk.getDuration() >0 && seekProgress){
                     duration = ffNdk.getDuration() * progress / 100;
                 }
             }
@@ -96,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 ffNdk.seekJtC(duration);
-                Log.d("seek time %ld", duration+"");
                 seekProgress = false;
             }
         });
@@ -183,14 +173,14 @@ public class MainActivity extends AppCompatActivity implements IPrepareListenter
     }
 
     public void pitch(View view) {
-        ffNdk.pitchspeedJtC(1.5f, 1.0f);
+        ffNdk.pitchspeedJtC(1.5f,1.0f);
     }
 
     public void speed(View view) {
-        ffNdk.pitchspeedJtC(1.0f, 1.5f);
+        ffNdk.pitchspeedJtC(1.0f,1.5f);
     }
 
     public void pitchspeed(View view) {
-        ffNdk.pitchspeedJtC(1.5f, 1.5f);
+        ffNdk.pitchspeedJtC(1.5f,1.5f);
     }
 }

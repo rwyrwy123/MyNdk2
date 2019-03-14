@@ -25,9 +25,9 @@ void RWAudioQuene::popAVPacket(AVPacket *avPacket) {
         av_packet_free(&packet);
         free(packet);
     } else {
-        if (LOG_DEBUG) {
-            LOGI("popAVPacket wait")
-        }
+//        if (LOG_DEBUG) {
+//            LOGI("popAVPacket wait")
+//        }
         pthread_cond_wait(&pthread_cond, &pthread_mutex);
     }
 

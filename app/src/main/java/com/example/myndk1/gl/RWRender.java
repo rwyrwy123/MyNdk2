@@ -53,7 +53,6 @@ public class RWRender implements GLSurfaceView.Renderer {
 
     public RWRender(Context context) {
         this.context = context;
-        this.context = context;
         vertexBuffer = ByteBuffer.allocateDirect(vertexData.length * 4)
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer()
